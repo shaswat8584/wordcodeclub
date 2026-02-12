@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import WordCard from "@/components/WordCard";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 
 interface DictionaryResult {
   word: string;
@@ -19,6 +20,9 @@ interface DictionaryResult {
 
 export default function Index() {
   const [search, setSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: words = [], isLoading } = useQuery({
     queryKey: ["words", search],
@@ -36,15 +40,44 @@ export default function Index() {
   });
 
   const { data: dictResult, isLoading: isDictLoading } = useQuery({
-    queryKey: ["dictionary", search],
+    queryKey: ["dictionary", submittedSearch],
     queryFn: async (): Promise<DictionaryResult | null> => {
-      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(search.trim())}`);
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(submittedSearch.trim())}`);
       if (!res.ok) return null;
       const data = await res.json();
       return data?.[0] ?? null;
     },
-    enabled: !!search.trim() && words.length === 0 && !isLoading,
+    enabled: !!submittedSearch.trim() && words.length === 0 && !isLoading,
   });
+
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && search.trim()) {
+      setSubmittedSearch(search.trim());
+    }
+  };
+
+  // Save the dictionary result to DB
+  const saveToDb = async (dict: DictionaryResult) => {
+    setSaving(true);
+    const firstMeaning = dict.meanings[0];
+    const firstDef = firstMeaning?.definitions[0];
+    const { error } = await supabase.from("words").insert({
+      word: dict.word,
+      definition: firstDef?.definition ?? "No definition available.",
+      example_sentence: firstDef?.example ?? null,
+      difficulty: "medium",
+    });
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: "Failed to save word.", variant: "destructive" });
+    } else {
+      toast({ title: "Saved!", description: `"${dict.word}" added to your vault.` });
+      queryClient.invalidateQueries({ queryKey: ["words"] });
+      setSubmittedSearch("");
+    }
+  };
+
+  const showDictLookup = !!submittedSearch.trim() && words.length === 0 && !isLoading;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -64,9 +97,10 @@ export default function Index() {
         <div className="relative max-w-xl mx-auto">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Search for a word..."
+            placeholder="Search for a word and press Enter..."
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="pl-12 h-14 text-lg rounded-full glass-card border-border/50 focus-visible:ring-primary"
           />
         </div>
@@ -83,7 +117,7 @@ export default function Index() {
               <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
             ))}
           </div>
-        ) : words.length === 0 && search.trim() ? (
+        ) : showDictLookup ? (
           <div className="py-8">
             {isDictLoading ? (
               <div className="max-w-xl mx-auto h-40 rounded-lg bg-muted animate-pulse" />
@@ -113,13 +147,22 @@ export default function Index() {
                         </ul>
                       </div>
                     ))}
+                    <button
+                      onClick={() => saveToDb(dictResult)}
+                      disabled={saving}
+                      className="mt-4 w-full py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {saving ? "Saving..." : "Save to WordVault"}
+                    </button>
                   </CardContent>
                 </Card>
               </motion.div>
             ) : (
-              <p className="text-muted-foreground text-center">No definition found for "{search}". Try a different word!</p>
+              <p className="text-muted-foreground text-center">No definition found for "{submittedSearch}". Try a different word!</p>
             )}
           </div>
+        ) : words.length === 0 ? (
+          <p className="text-muted-foreground text-center py-12">No words yet.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {words.map(w => (
