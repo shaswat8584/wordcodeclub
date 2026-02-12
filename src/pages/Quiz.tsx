@@ -1,14 +1,12 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, RotateCcw, Play } from "lucide-react";
-import { Link } from "react-router-dom";
 
 type QuizState = "setup" | "playing" | "results";
 
@@ -22,7 +20,6 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function Quiz() {
-  const { user } = useAuth();
   const [difficulty, setDifficulty] = useState<string>("all");
   const [state, setState] = useState<QuizState>("setup");
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -63,14 +60,11 @@ export default function Quiz() {
     setResults({ correct, total });
     setState("results");
 
-    if (user) {
-      await supabase.from("quiz_scores").insert({
-        user_id: user.id,
-        score: correct,
-        total,
-        difficulty: difficulty === "all" ? "mixed" : difficulty,
-      });
-    }
+    await supabase.from("quiz_scores").insert({
+      score: correct,
+      total,
+      difficulty: difficulty === "all" ? "mixed" : difficulty,
+    });
   };
 
   const startQuiz = () => {
@@ -79,15 +73,6 @@ export default function Quiz() {
     setResults(null);
     setState("playing");
   };
-
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">Sign in to take quizzes and track your scores.</p>
-        <Button className="gradient-btn rounded-full" asChild><Link to="/auth">Sign In</Link></Button>
-      </div>
-    );
-  }
 
   if (state === "setup") {
     return (
@@ -152,14 +137,12 @@ export default function Quiz() {
     );
   }
 
-  // Playing state
   const allMatched = Object.keys(matches).length === quizWords.length;
 
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-6 gradient-text">Match the Words</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-        {/* Words column */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Words</h3>
           <AnimatePresence>
@@ -181,7 +164,6 @@ export default function Quiz() {
           </AnimatePresence>
         </div>
 
-        {/* Definitions column */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Definitions</h3>
           {shuffledDefs.map(d => {
