@@ -59,12 +59,6 @@ export default function Quiz() {
     const total = quizWords.length;
     setResults({ correct, total });
     setState("results");
-
-    await supabase.from("quiz_scores").insert({
-      score: correct,
-      total,
-      difficulty: difficulty === "all" ? "mixed" : difficulty,
-    });
   };
 
   const startQuiz = () => {
