@@ -34,7 +34,7 @@ export default function WordDetail() {
         <Link to="/"><ArrowLeft className="mr-1.5 h-3 w-3" />Back</Link>
       </Button>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <Card className="bg-card border border-border">
+        <Card className="bg-card/80 backdrop-blur-xl border border-border relative z-10">
           <CardContent className="p-8">
             <div className="flex items-center gap-3 mb-6">
               <h1 className="text-4xl font-normal capitalize tracking-tight">{word.word}</h1>
