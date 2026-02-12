@@ -59,12 +59,16 @@ export default function Index() {
   // Save the dictionary result to DB
   const saveToDb = async (dict: DictionaryResult) => {
     setSaving(true);
-    const firstMeaning = dict.meanings[0];
-    const firstDef = firstMeaning?.definitions[0];
+    const allDefs = dict.meanings.map(m =>
+      m.definitions.slice(0, 3).map(d => `(${m.partOfSpeech}) ${d.definition}`).join("; ")
+    ).join(" | ");
+    const firstExample = dict.meanings
+      .flatMap(m => m.definitions)
+      .find(d => d.example)?.example ?? null;
     const { error } = await supabase.from("words").insert({
       word: dict.word,
-      definition: firstDef?.definition ?? "No definition available.",
-      example_sentence: firstDef?.example ?? null,
+      definition: allDefs,
+      example_sentence: firstExample,
       difficulty: "medium",
     });
     setSaving(false);
