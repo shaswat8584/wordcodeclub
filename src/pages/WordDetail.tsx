@@ -49,9 +49,31 @@ export default function WordDetail() {
               </Badge>
             </div>
             <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Definition</h3>
-                <p className="text-lg">{word.definition}</p>
+            <div>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Definition</h3>
+                <div className="space-y-3">
+                  {word.definition.includes(" | ") || word.definition.includes("(") ? (
+                    word.definition.split(" | ").map((section, i) => {
+                      const posMatch = section.match(/^\(([^)]+)\)\s*/);
+                      const partOfSpeech = posMatch ? posMatch[1] : null;
+                      const defs = section.split("; ").map(d => d.replace(/^\([^)]+\)\s*/, ""));
+                      return (
+                        <div key={i}>
+                          {partOfSpeech && (
+                            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{partOfSpeech}</p>
+                          )}
+                          <ul className="space-y-1">
+                            {defs.map((d, j) => (
+                              <li key={j} className="text-sm">{d}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-lg">{word.definition}</p>
+                  )}
+                </div>
               </div>
               {word.example_sentence && (
                 <div>
