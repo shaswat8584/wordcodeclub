@@ -39,7 +39,7 @@ export type Database = {
           id: string
           score: number
           total: number
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -47,7 +47,7 @@ export type Database = {
           id?: string
           score: number
           total: number
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -55,7 +55,7 @@ export type Database = {
           id?: string
           score?: number
           total?: number
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -66,7 +66,7 @@ export type Database = {
           difficulty: string
           example_sentence: string | null
           id: string
-          user_id: string
+          user_id: string | null
           word: string
         }
         Insert: {
@@ -75,7 +75,7 @@ export type Database = {
           difficulty?: string
           example_sentence?: string | null
           id?: string
-          user_id: string
+          user_id?: string | null
           word: string
         }
         Update: {
@@ -84,7 +84,7 @@ export type Database = {
           difficulty?: string
           example_sentence?: string | null
           id?: string
-          user_id?: string
+          user_id?: string | null
           word?: string
         }
         Relationships: []

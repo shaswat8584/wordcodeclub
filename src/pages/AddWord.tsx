@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,25 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
 
 export default function AddWord() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [word, setWord] = useState("");
   const [definition, setDefinition] = useState("");
   const [example, setExample] = useState("");
   const [difficulty, setDifficulty] = useState("medium");
-
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">You need to sign in to add words.</p>
-        <Button className="gradient-btn rounded-full" asChild><Link to="/auth">Sign In</Link></Button>
-      </div>
-    );
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +35,6 @@ export default function AddWord() {
       definition: definition.trim(),
       example_sentence: example.trim() || null,
       difficulty,
-      user_id: user.id,
     });
     setLoading(false);
 
