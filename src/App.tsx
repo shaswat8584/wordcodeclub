@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import ParticleBackground from "@/components/ParticleBackground";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
 
@@ -19,6 +20,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ParticleBackground />
       <BrowserRouter>
         <Navbar />
         <main className="min-h-[calc(100vh-4rem)]">
