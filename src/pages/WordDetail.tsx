@@ -7,12 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
-const difficultyStyles: Record<string, string> = {
-  easy: "difficulty-easy",
-  medium: "difficulty-medium",
-  hard: "difficulty-hard",
-};
-
 export default function WordDetail() {
   const { id } = useParams<{ id: string }>();
 
@@ -26,31 +20,31 @@ export default function WordDetail() {
     enabled: !!id,
   });
 
-  if (isLoading) return <div className="container mx-auto px-4 py-12"><div className="h-48 bg-muted animate-pulse rounded-xl" /></div>;
+  if (isLoading) return <div className="container mx-auto px-4 py-12 max-w-2xl"><div className="h-48 bg-muted animate-pulse rounded-lg" /></div>;
   if (!word) return (
     <div className="container mx-auto px-4 py-12 text-center">
-      <p className="text-muted-foreground mb-4">Word not found.</p>
-      <Button asChild><Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back to Home</Link></Button>
+      <p className="text-muted-foreground mb-4 text-sm">Word not found.</p>
+      <Button variant="outline" size="sm" asChild><Link to="/"><ArrowLeft className="mr-2 h-3 w-3" />Back</Link></Button>
     </div>
   );
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-2xl">
-      <Button variant="ghost" asChild className="mb-6">
-        <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Back</Link>
+      <Button variant="ghost" size="sm" asChild className="mb-6 text-muted-foreground">
+        <Link to="/"><ArrowLeft className="mr-1.5 h-3 w-3" />Back</Link>
       </Button>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="glass-card">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <Card className="bg-card border border-border">
           <CardContent className="p-8">
             <div className="flex items-center gap-3 mb-6">
-              <h1 className="text-4xl font-bold capitalize">{word.word}</h1>
-              <Badge className={`${difficultyStyles[word.difficulty]} border-0`}>
+              <h1 className="text-4xl font-normal capitalize tracking-tight">{word.word}</h1>
+              <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-sans font-medium">
                 {word.difficulty}
               </Badge>
             </div>
-            <div className="space-y-4">
-            <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Definition</h3>
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-3 font-sans">Definition</h3>
                 <div className="space-y-3">
                   {word.definition.includes(" | ") || word.definition.includes("(") ? (
                     word.definition.split(" | ").map((section, i) => {
@@ -60,29 +54,29 @@ export default function WordDetail() {
                       return (
                         <div key={i}>
                           {partOfSpeech && (
-                            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{partOfSpeech}</p>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 font-sans">{partOfSpeech}</p>
                           )}
                           <ul className="space-y-1">
                             {defs.map((d, j) => (
-                              <li key={j} className="text-sm">{d}</li>
+                              <li key={j} className="text-sm leading-relaxed">{d}</li>
                             ))}
                           </ul>
                         </div>
                       );
                     })
                   ) : (
-                    <p className="text-lg">{word.definition}</p>
+                    <p className="text-base leading-relaxed">{word.definition}</p>
                   )}
                 </div>
               </div>
               {word.example_sentence && (
                 <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Example</h3>
-                  <p className="text-lg italic text-muted-foreground">"{word.example_sentence}"</p>
+                  <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 font-sans">Example</h3>
+                  <p className="text-base italic text-muted-foreground">"{word.example_sentence}"</p>
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
-                Added on {new Date(word.created_at).toLocaleDateString()}
+              <p className="text-xs text-muted-foreground/60 pt-2">
+                Added {new Date(word.created_at).toLocaleDateString()}
               </p>
             </div>
           </CardContent>

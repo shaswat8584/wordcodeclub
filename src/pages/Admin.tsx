@@ -109,21 +109,22 @@ export default function Admin() {
   if (!authenticated) {
     return (
       <div className="container mx-auto px-4 py-24 max-w-sm">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="glass-card">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <Card className="bg-card border border-border">
             <CardHeader className="text-center">
-              <Lock className="h-8 w-8 mx-auto text-primary mb-2" />
-              <CardTitle>Admin Access</CardTitle>
+              <Lock className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+              <CardTitle className="text-xl font-normal">Admin Access</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
                 <Input
                   type="password"
-                  placeholder="Enter admin password"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="text-sm"
                 />
-                <Button type="submit" className="w-full gradient-btn">
+                <Button type="submit" className="w-full">
                   Unlock
                 </Button>
               </form>
@@ -135,9 +136,9 @@ export default function Admin() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">
-        <span className="gradient-text">Admin</span> — Manage Words
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <h1 className="text-3xl font-normal mb-6 tracking-tight">
+        Admin — Manage Words
       </h1>
 
       {isLoading ? (
@@ -147,11 +148,11 @@ export default function Admin() {
           ))}
         </div>
       ) : words.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12">No words in the vault.</p>
+        <p className="text-muted-foreground text-center py-12 text-sm">No words in the vault.</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {words.map((w) => (
-            <Card key={w.id} className="glass-card">
+            <Card key={w.id} className="bg-card border border-border">
               <CardContent className="p-4">
                 {editingId === w.id ? (
                   <div className="space-y-3">
@@ -160,15 +161,16 @@ export default function Admin() {
                         value={editForm.word ?? ""}
                         onChange={(e) => setEditForm({ ...editForm, word: e.target.value })}
                         placeholder="Word"
+                        className="text-sm"
                       />
                       <Select
                         value={editForm.difficulty}
                         onValueChange={(v) => setEditForm({ ...editForm, difficulty: v })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-popover border border-border">
                           <SelectItem value="easy">Easy</SelectItem>
                           <SelectItem value="medium">Medium</SelectItem>
                           <SelectItem value="hard">Hard</SelectItem>
@@ -180,18 +182,20 @@ export default function Admin() {
                       onChange={(e) => setEditForm({ ...editForm, definition: e.target.value })}
                       placeholder="Definition"
                       rows={3}
+                      className="text-sm"
                     />
                     <Input
                       value={editForm.example_sentence ?? ""}
                       onChange={(e) => setEditForm({ ...editForm, example_sentence: e.target.value })}
                       placeholder="Example sentence (optional)"
+                      className="text-sm"
                     />
                     <div className="flex gap-2 justify-end">
                       <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                        <X className="h-4 w-4 mr-1" /> Cancel
+                        <X className="h-3.5 w-3.5 mr-1" /> Cancel
                       </Button>
                       <Button size="sm" onClick={() => saveEdit(w.id)}>
-                        <Save className="h-4 w-4 mr-1" /> Save
+                        <Save className="h-3.5 w-3.5 mr-1" /> Save
                       </Button>
                     </div>
                   </div>
@@ -199,19 +203,19 @@ export default function Admin() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold capitalize">{w.word}</span>
-                        <Badge className={`difficulty-${w.difficulty} border-0 text-xs`}>
+                        <span className="font-medium capitalize text-sm">{w.word}</span>
+                        <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-sans">
                           {w.difficulty}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{w.definition}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{w.definition}</p>
                     </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button size="icon" variant="ghost" onClick={() => startEdit(w)}>
-                        <Pencil className="h-4 w-4" />
+                    <div className="flex gap-0.5 shrink-0">
+                      <Button size="icon" variant="ghost" onClick={() => startEdit(w)} className="h-8 w-8">
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => deleteWord(w.id, w.word)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteWord(w.id, w.word)}>
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
