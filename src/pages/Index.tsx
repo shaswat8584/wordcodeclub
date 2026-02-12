@@ -56,7 +56,6 @@ export default function Index() {
     }
   };
 
-  // Save the dictionary result to DB
   const saveToDb = async (dict: DictionaryResult) => {
     setSaving(true);
     const allDefs = dict.meanings.map(m =>
@@ -84,67 +83,67 @@ export default function Index() {
   const showDictLookup = !!submittedSearch.trim() && words.length === 0 && !isLoading;
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-16 max-w-3xl">
       {/* Hero */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center mb-16"
       >
-        <h1 className="text-5xl md:text-6xl font-bold mb-4">
-          <span className="gradient-text">WordVault</span>
+        <h1 className="text-5xl md:text-7xl font-normal mb-4 tracking-tight">
+          WordVault
         </h1>
-        <p className="text-lg text-muted-foreground max-w-md mx-auto mb-8">
+        <p className="text-muted-foreground max-w-sm mx-auto mb-10">
           A community-powered dictionary. Search, learn, and quiz yourself.
         </p>
 
-        <div className="relative max-w-xl mx-auto">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
+        <div className="relative max-w-md mx-auto">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search for a word and press Enter..."
+            placeholder="Search for a word…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="pl-12 h-14 text-lg rounded-full bg-card border border-border shadow-md focus-visible:ring-2 focus-visible:ring-primary"
+            className="pl-11 h-12 bg-card border border-border rounded-lg text-sm focus-visible:ring-1 focus-visible:ring-foreground/20"
           />
         </div>
       </motion.div>
 
-      {/* Words grid */}
+      {/* Words */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4 font-sans">
           {search.trim() ? `Results for "${search}"` : "Recently Added"}
         </h2>
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-28 rounded-lg bg-muted animate-pulse" />
             ))}
           </div>
         ) : showDictLookup ? (
           <div className="py-8">
             {isDictLoading ? (
-              <div className="max-w-xl mx-auto h-40 rounded-lg bg-muted animate-pulse" />
+              <div className="max-w-md mx-auto h-40 rounded-lg bg-muted animate-pulse" />
             ) : dictResult ? (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto">
-                <Card className="glass-card">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto">
+                <Card className="bg-card border border-border">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <CardTitle className="text-2xl capitalize">{dictResult.word}</CardTitle>
+                      <CardTitle className="text-2xl capitalize font-normal">{dictResult.word}</CardTitle>
                       {dictResult.phonetic && (
                         <span className="text-muted-foreground text-sm">{dictResult.phonetic}</span>
                       )}
-                      <Badge variant="outline" className="ml-auto text-xs">From Web</Badge>
+                      <Badge variant="outline" className="ml-auto text-[10px] uppercase tracking-wider">Web</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {dictResult.meanings.map((m, i) => (
                       <div key={i}>
-                        <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{m.partOfSpeech}</p>
-                        <ul className="space-y-2">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 font-sans">{m.partOfSpeech}</p>
+                        <ul className="space-y-1.5">
                           {m.definitions.slice(0, 3).map((d, j) => (
                             <li key={j}>
-                              <p className="text-sm">{d.definition}</p>
+                              <p className="text-sm leading-relaxed">{d.definition}</p>
                               {d.example && <p className="text-xs text-muted-foreground italic mt-0.5">"{d.example}"</p>}
                             </li>
                           ))}
@@ -154,21 +153,21 @@ export default function Index() {
                     <button
                       onClick={() => saveToDb(dictResult)}
                       disabled={saving}
-                      className="mt-4 w-full py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                      className="mt-4 w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
-                      {saving ? "Saving..." : "Save to WordVault"}
+                      {saving ? "Saving…" : "Save to WordVault"}
                     </button>
                   </CardContent>
                 </Card>
               </motion.div>
             ) : (
-              <p className="text-muted-foreground text-center">No definition found for "{submittedSearch}". Try a different word!</p>
+              <p className="text-muted-foreground text-center text-sm">No definition found for "{submittedSearch}".</p>
             )}
           </div>
         ) : words.length === 0 ? (
-          <p className="text-muted-foreground text-center py-12">No words yet.</p>
+          <p className="text-muted-foreground text-center py-12 text-sm">No words yet.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {words.map(w => (
               <WordCard key={w.id} word={w} />
             ))}
