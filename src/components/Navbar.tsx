@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Plus, Brain, Menu, X } from "lucide-react";
+import { BookOpen, Brain, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar() {
@@ -9,7 +9,6 @@ export default function Navbar() {
   const links = [
     { to: "/", label: "Home", icon: BookOpen },
     { to: "/browse", label: "Browse", icon: BookOpen },
-    { to: "/add", label: "Add Word", icon: Plus },
     { to: "/quiz", label: "Quiz", icon: Brain },
   ];
 

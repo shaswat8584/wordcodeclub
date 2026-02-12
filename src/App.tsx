@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
-import AddWord from "./pages/AddWord";
+
 import WordDetail from "./pages/WordDetail";
 import Quiz from "./pages/Quiz";
 import NotFound from "./pages/NotFound";
@@ -24,7 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/browse" element={<Browse />} />
-            <Route path="/add" element={<AddWord />} />
+            
             <Route path="/word/:id" element={<WordDetail />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="*" element={<NotFound />} />
