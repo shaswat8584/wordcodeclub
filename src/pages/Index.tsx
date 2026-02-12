@@ -5,6 +5,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import WordCard from "@/components/WordCard";
 import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+interface DictionaryResult {
+  word: string;
+  phonetic?: string;
+  meanings: {
+    partOfSpeech: string;
+    definitions: { definition: string; example?: string }[];
+  }[];
+}
 
 export default function Index() {
   const [search, setSearch] = useState("");
@@ -22,6 +33,17 @@ export default function Index() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: dictResult, isLoading: isDictLoading } = useQuery({
+    queryKey: ["dictionary", search],
+    queryFn: async (): Promise<DictionaryResult | null> => {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(search.trim())}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.[0] ?? null;
+    },
+    enabled: !!search.trim() && words.length === 0 && !isLoading,
   });
 
   return (
@@ -61,10 +83,43 @@ export default function Index() {
               <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
             ))}
           </div>
-        ) : words.length === 0 ? (
-          <p className="text-muted-foreground text-center py-12">
-            {search.trim() ? "No words found. Try a different search!" : "No words yet. Be the first to add one!"}
-          </p>
+        ) : words.length === 0 && search.trim() ? (
+          <div className="py-8">
+            {isDictLoading ? (
+              <div className="max-w-xl mx-auto h-40 rounded-lg bg-muted animate-pulse" />
+            ) : dictResult ? (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto">
+                <Card className="glass-card">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <CardTitle className="text-2xl capitalize">{dictResult.word}</CardTitle>
+                      {dictResult.phonetic && (
+                        <span className="text-muted-foreground text-sm">{dictResult.phonetic}</span>
+                      )}
+                      <Badge variant="outline" className="ml-auto text-xs">From Web</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {dictResult.meanings.map((m, i) => (
+                      <div key={i}>
+                        <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{m.partOfSpeech}</p>
+                        <ul className="space-y-2">
+                          {m.definitions.slice(0, 3).map((d, j) => (
+                            <li key={j}>
+                              <p className="text-sm">{d.definition}</p>
+                              {d.example && <p className="text-xs text-muted-foreground italic mt-0.5">"{d.example}"</p>}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <p className="text-muted-foreground text-center">No definition found for "{search}". Try a different word!</p>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {words.map(w => (
