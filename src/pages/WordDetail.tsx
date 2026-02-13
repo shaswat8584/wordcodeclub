@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,11 +10,14 @@ import { motion } from "framer-motion";
 
 export default function WordDetail() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
 
   const { data: word, isLoading } = useQuery({
-    queryKey: ["word", id],
+    queryKey: ["word", id, user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("words").select("*").eq("id", id!).maybeSingle();
+      let q = supabase.from("words").select("*").eq("id", id!);
+      if (user) q = q.eq("user_id", user.id);
+      const { data, error } = await q.maybeSingle();
       if (error) throw error;
       return data;
     },
