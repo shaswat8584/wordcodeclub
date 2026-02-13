@@ -4,6 +4,8 @@ import { Menu, X, Moon, Sun, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
+import logoDark from "@/assets/logo-dark.png";
+import logoLight from "@/assets/logo-light.png";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -20,7 +22,8 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-xl font-semibold tracking-tight font-['Instrument_Serif']">WordVault</span>
+          <img src={logoLight} alt="WordVault" className="h-8 hidden dark:block" />
+          <img src={logoDark} alt="WordVault" className="h-8 dark:hidden" />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
