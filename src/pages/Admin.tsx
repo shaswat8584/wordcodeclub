@@ -1,114 +1,127 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Lock, Pencil, Trash2, Save, X } from "lucide-react";
+import {
+  Lock,
+  Users,
+  BookOpen,
+  CalendarPlus,
+  TrendingUp,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { supabase as supabaseClient } from "@/integrations/supabase/client";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
-interface WordRow {
-  id: string;
-  word: string;
-  definition: string;
-  example_sentence: string | null;
-  difficulty: string;
-  created_at: string;
-  user_id: string | null;
+interface DashboardData {
+  stats: {
+    totalUsers: number;
+    totalWords: number;
+    wordsToday: number;
+    avgPerUser: number;
+  };
+  wordsByDate: { date: string; count: number }[];
+  difficultyBreakdown: { difficulty: string; count: number }[];
+  recentWords: {
+    word: string;
+    difficulty: string;
+    displayName: string;
+    createdAt: string;
+  }[];
+  topUsers: {
+    displayName: string;
+    wordCount: number;
+    latestActivity: string;
+  }[];
+}
+
+const PIE_COLORS = [
+  "hsl(var(--primary))",
+  "hsl(var(--accent))",
+  "hsl(var(--muted-foreground))",
+];
+
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+}) {
+  return (
+    <Card className="bg-card border border-border">
+      <CardContent className="p-5 flex items-center gap-4">
+        <div className="rounded-md bg-muted p-2.5">
+          <Icon className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">
+            {title}
+          </p>
+          <p className="text-2xl font-semibold tracking-tight">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<WordRow>>({});
-  const queryClient = useQueryClient();
+  const [storedPassword, setStoredPassword] = useState("");
 
-  const { data: words = [], isLoading } = useQuery({
-    queryKey: ["admin-words"],
+  const { data, isLoading } = useQuery<DashboardData>({
+    queryKey: ["admin-dashboard"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("words")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.functions.invoke(
+        "admin-dashboard",
+        { body: { password: storedPassword } }
+      );
       if (error) throw error;
-      return data as WordRow[];
+      return data as DashboardData;
     },
     enabled: authenticated,
+    refetchInterval: 60_000,
   });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabaseClient.functions.invoke("admin-auth", {
+      const { data, error } = await supabase.functions.invoke("admin-auth", {
         body: { password },
       });
       if (error || !data?.success) {
         toast({ title: "Wrong password", variant: "destructive" });
       } else {
+        setStoredPassword(password);
         setAuthenticated(true);
       }
     } catch {
       toast({ title: "Error verifying password", variant: "destructive" });
-    }
-  };
-
-  const startEdit = (word: WordRow) => {
-    setEditingId(word.id);
-    setEditForm({
-      word: word.word,
-      definition: word.definition,
-      example_sentence: word.example_sentence,
-      difficulty: word.difficulty,
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditForm({});
-  };
-
-  const saveEdit = async (id: string) => {
-    const { error } = await supabase
-      .from("words")
-      .update({
-        word: editForm.word,
-        definition: editForm.definition,
-        example_sentence: editForm.example_sentence || null,
-        difficulty: editForm.difficulty,
-      })
-      .eq("id", id);
-
-    if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Word updated!" });
-      setEditingId(null);
-      queryClient.invalidateQueries({ queryKey: ["admin-words"] });
-      queryClient.invalidateQueries({ queryKey: ["words"] });
-    }
-  };
-
-  const deleteWord = async (id: string, word: string) => {
-    if (!confirm(`Delete "${word}"?`)) return;
-    const { error } = await supabase.from("words").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Error deleting", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: `"${word}" deleted` });
-      queryClient.invalidateQueries({ queryKey: ["admin-words"] });
-      queryClient.invalidateQueries({ queryKey: ["words"] });
     }
   };
 
@@ -119,7 +132,9 @@ export default function Admin() {
           <Card className="bg-card border border-border">
             <CardHeader className="text-center">
               <Lock className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
-              <CardTitle className="text-xl font-normal">Admin Access</CardTitle>
+              <CardTitle className="text-xl font-normal">
+                Admin Access
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
@@ -141,94 +156,218 @@ export default function Admin() {
     );
   }
 
+  const stats = data?.stats;
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
       <h1 className="text-3xl font-normal mb-6 tracking-tight">
-        Admin — Manage Words
+        Admin — Dashboard
       </h1>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 rounded-lg bg-muted animate-pulse" />
-          ))}
+      {isLoading || !data ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
+            ))}
+          </div>
+          <div className="h-64 rounded-lg bg-muted animate-pulse" />
         </div>
-      ) : words.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12 text-sm">No words in the vault.</p>
       ) : (
-        <div className="space-y-2">
-          {words.map((w) => (
-            <Card key={w.id} className="bg-card border border-border">
-              <CardContent className="p-4">
-                {editingId === w.id ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Input
-                        value={editForm.word ?? ""}
-                        onChange={(e) => setEditForm({ ...editForm, word: e.target.value })}
-                        placeholder="Word"
-                        className="text-sm"
-                      />
-                      <Select
-                        value={editForm.difficulty}
-                        onValueChange={(v) => setEditForm({ ...editForm, difficulty: v })}
-                      >
-                        <SelectTrigger className="text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover border border-border">
-                          <SelectItem value="easy">Easy</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="hard">Hard</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Textarea
-                      value={editForm.definition ?? ""}
-                      onChange={(e) => setEditForm({ ...editForm, definition: e.target.value })}
-                      placeholder="Definition"
-                      rows={3}
-                      className="text-sm"
+        <div className="space-y-6">
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard
+              title="Total Users"
+              value={stats?.totalUsers ?? 0}
+              icon={Users}
+            />
+            <StatCard
+              title="Total Words"
+              value={stats?.totalWords ?? 0}
+              icon={BookOpen}
+            />
+            <StatCard
+              title="Words Today"
+              value={stats?.wordsToday ?? 0}
+              icon={CalendarPlus}
+            />
+            <StatCard
+              title="Avg / User"
+              value={stats?.avgPerUser ?? 0}
+              icon={TrendingUp}
+            />
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Area Chart */}
+            <Card className="md:col-span-2 bg-card border border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Words Added (Last 30 Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.wordsByDate}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="hsl(var(--border))"
                     />
-                    <Input
-                      value={editForm.example_sentence ?? ""}
-                      onChange={(e) => setEditForm({ ...editForm, example_sentence: e.target.value })}
-                      placeholder="Example sentence (optional)"
-                      className="text-sm"
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                      tickFormatter={(v) => v.slice(5)}
                     />
-                    <div className="flex gap-2 justify-end">
-                      <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                        <X className="h-3.5 w-3.5 mr-1" /> Cancel
-                      </Button>
-                      <Button size="sm" onClick={() => saveEdit(w.id)}>
-                        <Save className="h-3.5 w-3.5 mr-1" /> Save
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium capitalize text-sm">{w.word}</span>
-                        <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-sans">
-                          {w.difficulty}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{w.definition}</p>
-                    </div>
-                    <div className="flex gap-0.5 shrink-0">
-                      <Button size="icon" variant="ghost" onClick={() => startEdit(w)} className="h-8 w-8">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteWord(w.id, w.word)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                    <YAxis
+                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="count"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary) / 0.15)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
-          ))}
+
+            {/* Pie Chart */}
+            <Card className="bg-card border border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Difficulty Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-64 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.difficultyBreakdown}
+                      dataKey="count"
+                      nameKey="difficulty"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={4}
+                      label={({ difficulty, count }) =>
+                        `${difficulty} (${count})`
+                      }
+                    >
+                      {data.difficultyBreakdown.map((_, i) => (
+                        <Cell
+                          key={i}
+                          fill={PIE_COLORS[i % PIE_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tables Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Recent Words */}
+            <Card className="bg-card border border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Word</TableHead>
+                      <TableHead className="text-xs">Difficulty</TableHead>
+                      <TableHead className="text-xs">User</TableHead>
+                      <TableHead className="text-xs">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.recentWords.map((w, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-xs font-medium capitalize">
+                          {w.word}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] uppercase tracking-wider"
+                          >
+                            {w.difficulty}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {w.displayName}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(w.createdAt).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Top Users */}
+            <Card className="bg-card border border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Top Users
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">User</TableHead>
+                      <TableHead className="text-xs">Words</TableHead>
+                      <TableHead className="text-xs">Last Active</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.topUsers.map((u, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-xs font-medium">
+                          {u.displayName}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {u.wordCount}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(u.latestActivity).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
     </div>
