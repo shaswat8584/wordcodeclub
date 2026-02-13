@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Plus } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import WordCard from "@/components/WordCard";
@@ -23,7 +23,6 @@ interface DictionaryResult {
 export default function Index() {
   const [search, setSearch] = useState("");
   const [searching, setSearching] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<{
     word: string;
     definition: string;
@@ -74,6 +73,21 @@ export default function Index() {
           .find(d => d.example)?.example ?? null;
 
         setPreview({ word: dict.word, definition: allDefs, example: firstExample });
+
+        // Auto-save the word
+        const { error: insertError } = await supabase.from("words").insert({
+          word: dict.word,
+          definition: allDefs,
+          example_sentence: firstExample,
+          difficulty: "medium",
+          user_id: user.id,
+        });
+        if (insertError) {
+          toast({ title: "Error", description: "Failed to save word.", variant: "destructive" });
+        } else {
+          toast({ title: "Saved!", description: `"${dict.word}" added to your vault.` });
+          queryClient.invalidateQueries({ queryKey: ["words"] });
+        }
       } catch {
         toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
       }
@@ -81,26 +95,6 @@ export default function Index() {
     }
   };
 
-  const handleSave = async () => {
-    if (!preview || !user) return;
-    setSaving(true);
-    const { error } = await supabase.from("words").insert({
-      word: preview.word,
-      definition: preview.definition,
-      example_sentence: preview.example,
-      difficulty: "medium",
-      user_id: user.id,
-    });
-    if (error) {
-      toast({ title: "Error", description: "Failed to save word.", variant: "destructive" });
-    } else {
-      toast({ title: "Saved!", description: `"${preview.word}" added to your vault.` });
-      queryClient.invalidateQueries({ queryKey: ["words"] });
-      setSearch("");
-      setPreview(null);
-    }
-    setSaving(false);
-  };
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-3xl">
@@ -130,17 +124,12 @@ export default function Index() {
 
             {preview && (
               <Card className="p-4 text-left bg-card/80 backdrop-blur-xl border border-border">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-medium capitalize">{preview.word}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{preview.definition}</p>
-                    {preview.example && (
-                      <p className="text-xs text-muted-foreground/70 mt-2 italic">"{preview.example}"</p>
-                    )}
-                  </div>
-                  <Button size="sm" onClick={handleSave} disabled={saving} className="shrink-0">
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4 mr-1" /> Save</>}
-                  </Button>
+                <div>
+                  <h3 className="text-lg font-medium capitalize">{preview.word}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{preview.definition}</p>
+                  {preview.example && (
+                    <p className="text-xs text-muted-foreground/70 mt-2 italic">"{preview.example}"</p>
+                  )}
                 </div>
               </Card>
             )}
