@@ -58,12 +58,6 @@ export default function WordCard({ word }: WordCardProps) {
                   )}
                 </div>
               </div>
-              {word.example_sentence && (
-                <div>
-                  <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 font-sans">Example</h4>
-                  <p className="text-xs italic text-muted-foreground line-clamp-1">"{word.example_sentence}"</p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
