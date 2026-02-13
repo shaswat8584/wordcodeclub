@@ -14,7 +14,7 @@ export default function Navbar() {
 
   const links = [
     { to: "/", label: "Home" },
-    { to: "/browse", label: "Browse" },
+    { to: "/browse", label: "Vault" },
     { to: "/quiz", label: "Quiz" },
   ];
 
