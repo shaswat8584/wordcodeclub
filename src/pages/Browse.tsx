@@ -1,32 +1,37 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import WordCard from "@/components/WordCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const difficulties = ["all", "easy", "medium", "hard"] as const;
 
 export default function Browse() {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const { user } = useAuth();
 
   const { data: words = [], isLoading } = useQuery({
-    queryKey: ["browse-words", filter, search],
+    queryKey: ["browse-words", filter, search, user?.id],
     queryFn: async () => {
-      let q = supabase.from("words").select("*").order("word", { ascending: true });
+      if (!user) return [];
+      let q = supabase.from("words").select("*").eq("user_id", user.id).order("word", { ascending: true });
       if (filter !== "all") q = q.eq("difficulty", filter);
       if (search.trim()) q = q.ilike("word", `%${search.trim()}%`);
       const { data, error } = await q;
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
-      <h1 className="text-3xl font-normal mb-8 tracking-tight">Browse Words</h1>
+      <h1 className="text-3xl font-normal mb-8 tracking-tight">My Words</h1>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <div className="relative flex-1">
@@ -48,12 +53,16 @@ export default function Browse() {
         </div>
       </div>
 
-      {isLoading ? (
+      {!user ? (
+        <p className="text-muted-foreground text-center py-12 text-sm">
+          <Link to="/auth" className="text-foreground underline underline-offset-4">Sign in</Link> to see your saved words.
+        </p>
+      ) : isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-28 rounded-lg bg-muted animate-pulse" />)}
         </div>
       ) : words.length === 0 ? (
-        <p className="text-muted-foreground text-center py-12 text-sm">No words found.</p>
+        <p className="text-muted-foreground text-center py-12 text-sm">No words yet. Add some from the <Link to="/" className="text-foreground underline underline-offset-4">homepage</Link>.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {words.map(w => <WordCard key={w.id} word={w} />)}
