@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -40,8 +40,8 @@ export default function Quiz() {
     },
   });
 
-  const quizWords = useMemo(() => shuffle(allWords).slice(0, 5), [allWords, state]);
-  const shuffledDefs = useMemo(() => shuffle(quizWords.map(w => ({ id: w.id, definition: w.definition }))), [quizWords]);
+  const [quizWords, setQuizWords] = useState<typeof allWords>([]);
+  const [shuffledDefs, setShuffledDefs] = useState<{ id: string; definition: string }[]>([]);
 
   const handleWordClick = (wordId: string) => {
     if (matches[wordId]) return;
@@ -65,6 +65,9 @@ export default function Quiz() {
   };
 
   const startQuiz = () => {
+    const picked = shuffle(allWords).slice(0, 5);
+    setQuizWords(picked);
+    setShuffledDefs(shuffle(picked.map(w => ({ id: w.id, definition: w.definition }))));
     setMatches({});
     setSelectedWord(null);
     setResults(null);
