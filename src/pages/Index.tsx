@@ -125,43 +125,43 @@ export default function Index() {
 
             {preview && (
               <Card className="p-5 text-left bg-card/80 backdrop-blur-xl border border-border max-h-48 overflow-hidden">
-                <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-lg font-normal capitalize tracking-tight">{preview.word}</h3>
+                <div className="flex items-center gap-3 mb-4">
+                  <h3 className="text-2xl font-normal capitalize tracking-tight">{preview.word}</h3>
                   <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-sans font-medium">
                     medium
                   </Badge>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 font-sans">Definition</h4>
-                    <div className="space-y-2">
+                    <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-3 font-sans">Definition</h4>
+                    <div className="space-y-3">
                       {preview.definition.includes(" | ") || preview.definition.includes("(") ? (
-                        preview.definition.split(" | ").slice(0, 2).map((section, i) => {
+                        preview.definition.split(" | ").map((section, i) => {
                           const posMatch = section.match(/^\(([^)]+)\)\s*/);
                           const partOfSpeech = posMatch ? posMatch[1] : null;
                           const defs = section.split("; ").map(d => d.replace(/^\([^)]+\)\s*/, ""));
                           return (
                             <div key={i}>
                               {partOfSpeech && (
-                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-0.5 font-sans">{partOfSpeech}</p>
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 font-sans">{partOfSpeech}</p>
                               )}
-                              <ul className="space-y-0.5">
-                                {defs.slice(0, 2).map((d, j) => (
-                                  <li key={j} className="text-sm leading-relaxed line-clamp-1">{d}</li>
+                              <ul className="space-y-1">
+                                {defs.map((d, j) => (
+                                  <li key={j} className="text-sm leading-relaxed">{d}</li>
                                 ))}
                               </ul>
                             </div>
                           );
                         })
                       ) : (
-                        <p className="text-sm leading-relaxed line-clamp-2">{preview.definition}</p>
+                        <p className="text-base leading-relaxed">{preview.definition}</p>
                       )}
                     </div>
                   </div>
                   {preview.example && (
                     <div>
-                      <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 font-sans">Example</h4>
-                      <p className="text-xs italic text-muted-foreground line-clamp-1">"{preview.example}"</p>
+                      <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 font-sans">Example</h4>
+                      <p className="text-base italic text-muted-foreground">"{preview.example}"</p>
                     </div>
                   )}
                 </div>
