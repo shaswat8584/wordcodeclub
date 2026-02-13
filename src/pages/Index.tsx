@@ -124,7 +124,7 @@ export default function Index() {
             </div>
 
             {preview && (
-              <Card className="p-5 text-left bg-card/80 backdrop-blur-xl border border-border max-h-48 overflow-hidden">
+              <Card className="p-5 text-left bg-card/80 backdrop-blur-xl border border-border">
                 <div className="flex items-center gap-3 mb-4">
                   <h3 className="text-2xl font-normal capitalize tracking-tight">{preview.word}</h3>
                   <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-sans font-medium">
