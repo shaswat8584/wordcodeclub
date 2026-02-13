@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface DictionaryResult {
   word: string;
@@ -123,12 +124,45 @@ export default function Index() {
             </div>
 
             {preview && (
-              <Card className="p-4 text-left bg-card/80 backdrop-blur-xl border border-border">
-                <div>
-                  <h3 className="text-lg font-medium capitalize">{preview.word}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{preview.definition}</p>
+              <Card className="p-6 text-left bg-card/80 backdrop-blur-xl border border-border">
+                <div className="flex items-center gap-3 mb-4">
+                  <h3 className="text-2xl font-normal capitalize tracking-tight">{preview.word}</h3>
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-sans font-medium">
+                    medium
+                  </Badge>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-3 font-sans">Definition</h4>
+                    <div className="space-y-3">
+                      {preview.definition.includes(" | ") || preview.definition.includes("(") ? (
+                        preview.definition.split(" | ").map((section, i) => {
+                          const posMatch = section.match(/^\(([^)]+)\)\s*/);
+                          const partOfSpeech = posMatch ? posMatch[1] : null;
+                          const defs = section.split("; ").map(d => d.replace(/^\([^)]+\)\s*/, ""));
+                          return (
+                            <div key={i}>
+                              {partOfSpeech && (
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 font-sans">{partOfSpeech}</p>
+                              )}
+                              <ul className="space-y-1">
+                                {defs.map((d, j) => (
+                                  <li key={j} className="text-sm leading-relaxed">{d}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm leading-relaxed">{preview.definition}</p>
+                      )}
+                    </div>
+                  </div>
                   {preview.example && (
-                    <p className="text-xs text-muted-foreground/70 mt-2 italic">"{preview.example}"</p>
+                    <div>
+                      <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 font-sans">Example</h4>
+                      <p className="text-sm italic text-muted-foreground">"{preview.example}"</p>
+                    </div>
                   )}
                 </div>
               </Card>
