@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Moon, Sun } from "lucide-react";
+import { Menu, X, Moon, Sun, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { user, displayName, signOut } = useAuth();
 
   const links = [
     { to: "/", label: "Home" },
@@ -37,6 +39,19 @@ export default function Navbar() {
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
           </Button>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">{displayName}</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={signOut}>
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Sign out</span>
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/auth">Sign In</Link>
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
@@ -63,6 +78,19 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          {user ? (
+            <div className="flex items-center justify-between pt-2 border-t border-border mt-2">
+              <span className="text-sm text-muted-foreground">{displayName}</span>
+              <Button variant="ghost" size="sm" onClick={() => { signOut(); setOpen(false); }}>
+                <LogOut className="h-4 w-4 mr-1" /> Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Link to="/auth" onClick={() => setOpen(false)}
+              className="block py-2 text-sm text-foreground font-medium">
+              Sign In
+            </Link>
+          )}
         </div>
       )}
     </nav>

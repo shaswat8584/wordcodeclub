@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, RotateCcw, Play } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 type QuizState = "setup" | "playing" | "results";
 
@@ -24,11 +26,13 @@ export default function Quiz() {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [matches, setMatches] = useState<Record<string, string>>({});
   const [results, setResults] = useState<{ correct: number; total: number } | null>(null);
+  const { user } = useAuth();
 
   const { data: allWords = [] } = useQuery({
-    queryKey: ["quiz-words", difficulty],
+    queryKey: ["quiz-words", difficulty, user?.id],
     queryFn: async () => {
       let q = supabase.from("words").select("*");
+      if (user) q = q.eq("user_id", user.id);
       if (difficulty !== "all") q = q.eq("difficulty", difficulty);
       const { data, error } = await q;
       if (error) throw error;
@@ -66,6 +70,16 @@ export default function Quiz() {
     setResults(null);
     setState("playing");
   };
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-md text-center">
+        <h1 className="text-2xl font-normal tracking-tight mb-4">Quiz</h1>
+        <p className="text-sm text-muted-foreground mb-4">Sign in to quiz yourself on your words.</p>
+        <Button asChild><Link to="/auth">Sign In</Link></Button>
+      </div>
+    );
+  }
 
   if (state === "setup") {
     return (
@@ -142,9 +156,7 @@ export default function Quiz() {
               <motion.div key={w.id} layout>
                 <Button
                   variant={matches[w.id] ? "secondary" : selectedWord === w.id ? "default" : "outline"}
-                  className={`w-full justify-start capitalize text-left h-auto py-3 px-4 text-sm ${
-                    matches[w.id] ? "opacity-50" : ""
-                  }`}
+                  className={`w-full justify-start capitalize text-left h-auto py-3 px-4 text-sm ${matches[w.id] ? "opacity-50" : ""}`}
                   onClick={() => handleWordClick(w.id)}
                   disabled={!!matches[w.id]}
                 >
@@ -164,9 +176,7 @@ export default function Quiz() {
               <Button
                 key={d.id}
                 variant={isUsed ? "secondary" : "outline"}
-                className={`w-full justify-start text-left h-auto py-3 px-4 whitespace-normal text-sm ${
-                  isUsed ? "opacity-50" : ""
-                } ${selectedWord && !isUsed ? "border-foreground/30" : ""}`}
+                className={`w-full justify-start text-left h-auto py-3 px-4 whitespace-normal text-sm ${isUsed ? "opacity-50" : ""} ${selectedWord && !isUsed ? "border-foreground/30" : ""}`}
                 onClick={() => handleDefClick(d.id)}
                 disabled={isUsed || !selectedWord}
               >
