@@ -22,8 +22,8 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logoLight} alt="WordVault" className="h-8 hidden dark:block" />
-          <img src={logoDark} alt="WordVault" className="h-8 dark:hidden" />
+          <img src={logoDark} alt="WordVault" className="h-8 hidden dark:block" />
+          <img src={logoLight} alt="WordVault" className="h-8 dark:hidden" />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
