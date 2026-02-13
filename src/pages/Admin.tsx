@@ -16,8 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const ADMIN_PASSWORD = "wordvault2024";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 
 interface WordRow {
   id: string;
@@ -49,12 +48,19 @@ export default function Admin() {
     enabled: authenticated,
   });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-    } else {
-      toast({ title: "Wrong password", variant: "destructive" });
+    try {
+      const { data, error } = await supabaseClient.functions.invoke("admin-auth", {
+        body: { password },
+      });
+      if (error || !data?.success) {
+        toast({ title: "Wrong password", variant: "destructive" });
+      } else {
+        setAuthenticated(true);
+      }
+    } catch {
+      toast({ title: "Error verifying password", variant: "destructive" });
     }
   };
 
