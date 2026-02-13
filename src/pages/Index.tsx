@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Plus } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import WordCard from "@/components/WordCard";
@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface DictionaryResult {
   word: string;
@@ -21,45 +22,48 @@ interface DictionaryResult {
 
 export default function Index() {
   const [search, setSearch] = useState("");
+  const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState<{
+    word: string;
+    definition: string;
+    example: string | null;
+  } | null>(null);
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const { data: words = [], isLoading } = useQuery({
-    queryKey: ["words", search, user?.id],
+    queryKey: ["words", user?.id],
     queryFn: async () => {
-      let q = supabase.from("words").select("*").order("created_at", { ascending: false });
-      if (user) {
-        q = q.eq("user_id", user.id);
-      } else {
-        q = q.limit(0); // show nothing when logged out
-      }
-      if (search.trim()) {
-        q = q.ilike("word", `%${search.trim()}%`);
-      } else {
-        q = q.limit(12);
-      }
-      const { data, error } = await q;
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("words")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(12);
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && search.trim() && user) {
-      setSaving(true);
+      setSearching(true);
+      setPreview(null);
       try {
         const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(search.trim())}`);
         if (!res.ok) {
           toast({ title: "Not found", description: `No definition found for "${search.trim()}".`, variant: "destructive" });
-          setSaving(false);
+          setSearching(false);
           return;
         }
         const data = await res.json();
         const dict: DictionaryResult | null = data?.[0] ?? null;
         if (!dict) {
           toast({ title: "Not found", description: `No definition found for "${search.trim()}".`, variant: "destructive" });
-          setSaving(false);
+          setSearching(false);
           return;
         }
         const allDefs = dict.meanings.map(m =>
@@ -68,25 +72,34 @@ export default function Index() {
         const firstExample = dict.meanings
           .flatMap(m => m.definitions)
           .find(d => d.example)?.example ?? null;
-        const { error } = await supabase.from("words").insert({
-          word: dict.word,
-          definition: allDefs,
-          example_sentence: firstExample,
-          difficulty: "medium",
-          user_id: user.id,
-        });
-        if (error) {
-          toast({ title: "Error", description: "Failed to save word.", variant: "destructive" });
-        } else {
-          toast({ title: "Saved!", description: `"${dict.word}" added to your vault.` });
-          queryClient.invalidateQueries({ queryKey: ["words"] });
-          setSearch("");
-        }
+
+        setPreview({ word: dict.word, definition: allDefs, example: firstExample });
       } catch {
         toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
       }
-      setSaving(false);
+      setSearching(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (!preview || !user) return;
+    setSaving(true);
+    const { error } = await supabase.from("words").insert({
+      word: preview.word,
+      definition: preview.definition,
+      example_sentence: preview.example,
+      difficulty: "medium",
+      user_id: user.id,
+    });
+    if (error) {
+      toast({ title: "Error", description: "Failed to save word.", variant: "destructive" });
+    } else {
+      toast({ title: "Saved!", description: `"${preview.word}" added to your vault.` });
+      queryClient.invalidateQueries({ queryKey: ["words"] });
+      setSearch("");
+      setPreview(null);
+    }
+    setSaving(false);
   };
 
   return (
@@ -98,20 +111,39 @@ export default function Index() {
         </p>
 
         {user ? (
-          <div className="relative max-w-md mx-auto">
-            {saving ? (
-              <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
-            ) : (
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="relative">
+              {searching ? (
+                <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+              ) : (
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              )}
+              <Input
+                placeholder="Type a word and press Enter to search…"
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPreview(null); }}
+                onKeyDown={handleKeyDown}
+                disabled={searching}
+                className="pl-11 h-12 bg-card border border-border rounded-lg text-sm focus-visible:ring-1 focus-visible:ring-foreground/20"
+              />
+            </div>
+
+            {preview && (
+              <Card className="p-4 text-left bg-card/80 backdrop-blur-xl border border-border">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-medium capitalize">{preview.word}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{preview.definition}</p>
+                    {preview.example && (
+                      <p className="text-xs text-muted-foreground/70 mt-2 italic">"{preview.example}"</p>
+                    )}
+                  </div>
+                  <Button size="sm" onClick={handleSave} disabled={saving} className="shrink-0">
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Plus className="h-4 w-4 mr-1" /> Save</>}
+                  </Button>
+                </div>
+              </Card>
             )}
-            <Input
-              placeholder="Type a word and press Enter to add…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={saving}
-              className="pl-11 h-12 bg-card border border-border rounded-lg text-sm focus-visible:ring-1 focus-visible:ring-foreground/20"
-            />
           </div>
         ) : (
           <div className="space-y-3">
@@ -126,7 +158,7 @@ export default function Index() {
       {user && (
         <div>
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4 font-sans">
-            {search.trim() ? `Results for "${search}"` : "Recently Added"}
+            Recently Added
           </h2>
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
