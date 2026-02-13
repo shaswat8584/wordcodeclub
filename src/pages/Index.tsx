@@ -119,7 +119,7 @@ export default function Index() {
                 onChange={e => { setSearch(e.target.value); setPreview(null); }}
                 onKeyDown={handleKeyDown}
                 disabled={searching}
-                className="pl-11 h-12 bg-card border border-border rounded-lg text-sm focus-visible:ring-1 focus-visible:ring-foreground/20"
+                className="pl-11 h-12 bg-card border border-border rounded-lg text-sm focus-visible:ring-1 focus-visible:ring-foreground/20 uppercase"
               />
             </div>
 
