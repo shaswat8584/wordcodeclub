@@ -70,9 +70,11 @@ export default function Index() {
           return;
         }
 
-        // If not logged in, just show the preview without saving
+        // Show preview for all users
+        setPreviewWord(dict);
+
+        // If not logged in, don't save
         if (!user) {
-          setPreviewWord(dict);
           setSaving(false);
           return;
         }
@@ -134,7 +136,7 @@ export default function Index() {
       </motion.div>
 
       {/* Preview for non-logged-in users */}
-      {!user && previewWord && (
+      {previewWord && (
         <div className="mb-12">
           <Card className="p-6">
             <h2 className="text-2xl font-semibold capitalize mb-1">{previewWord.word}</h2>
@@ -156,14 +158,14 @@ export default function Index() {
                 </ol>
               </div>
             ))}
-            <p className="text-muted-foreground text-xs mt-4">
-              <Link to="/auth" className="text-foreground underline underline-offset-4">Sign in</Link> to save words to your collection.
-            </p>
+            {!user && (
+              <p className="text-muted-foreground text-xs mt-4">
+                <Link to="/auth" className="text-foreground underline underline-offset-4">Sign in</Link> to save words to your collection.
+              </p>
+            )}
           </Card>
         </div>
       )}
-
-      {/* Words - only show for logged in users */}
       {user && (
         <div>
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4 font-sans">
