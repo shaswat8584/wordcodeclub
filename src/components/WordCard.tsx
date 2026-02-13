@@ -36,7 +36,7 @@ export default function WordCard({ word }: WordCardProps) {
                 <h4 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 font-sans">Definition</h4>
                 <div className="space-y-2">
                   {word.definition.includes(" | ") || word.definition.includes("(") ? (
-                    word.definition.split(" | ").map((section, i) => {
+                    word.definition.split(" | ").slice(0, 1).map((section, i) => {
                       const posMatch = section.match(/^\(([^)]+)\)\s*/);
                       const partOfSpeech = posMatch ? posMatch[1] : null;
                       const defs = section.split("; ").map(d => d.replace(/^\([^)]+\)\s*/, ""));
