@@ -39,7 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .eq("id", session.user.id)
               .maybeSingle()
               .then(({ data }) => {
-                setDisplayName(data?.display_name ?? session.user.email ?? null);
+                const fallback = session.user.email?.replace(/@wordvault\.local$/, '') ?? null;
+                setDisplayName(data?.display_name ?? fallback);
               });
           }, 0);
         } else {
@@ -59,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("id", session.user.id)
           .maybeSingle()
           .then(({ data }) => {
-            setDisplayName(data?.display_name ?? session.user.email ?? null);
+            const fallback = session.user.email?.replace(/@wordvault\.local$/, '') ?? null;
+            setDisplayName(data?.display_name ?? fallback);
           });
       }
       setLoading(false);

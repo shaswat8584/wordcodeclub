@@ -11,9 +11,11 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 
+const toEmail = (username: string) => `${username.toLowerCase().trim()}@wordvault.local`;
+
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,12 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username.trim()) {
+      toast({ title: "Username required", variant: "destructive" });
+      return;
+    }
     setLoading(true);
+    const email = toEmail(username);
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({
@@ -34,7 +41,7 @@ export default function Auth() {
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { display_name: displayName || email },
+          data: { display_name: displayName || username },
         },
       });
       if (error) {
@@ -66,6 +73,18 @@ export default function Auth() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-xs">Username</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  placeholder="your_username"
+                  required
+                  className="text-sm"
+                  autoComplete="username"
+                />
+              </div>
               {isSignUp && (
                 <div className="space-y-2">
                   <Label htmlFor="displayName" className="text-xs">Display Name</Label>
@@ -73,23 +92,11 @@ export default function Auth() {
                     id="displayName"
                     value={displayName}
                     onChange={e => setDisplayName(e.target.value)}
-                    placeholder="Your name"
+                    placeholder="Your name (optional)"
                     className="text-sm"
                   />
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="text-sm"
-                />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-xs">Password</Label>
                 <Input
@@ -101,6 +108,7 @@ export default function Auth() {
                   required
                   minLength={6}
                   className="text-sm"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
