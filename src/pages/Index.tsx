@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import WordCard from "@/components/WordCard";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
@@ -20,11 +21,13 @@ export default function Index() {
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: words = [], isLoading } = useQuery({
-    queryKey: ["words", search],
+    queryKey: ["words", search, user?.id],
     queryFn: async () => {
-      let q = supabase.from("words").select("*").order("created_at", { ascending: false });
+      if (!user) return [];
+      let q = supabase.from("words").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       if (search.trim()) {
         q = q.ilike("word", `%${search.trim()}%`);
       } else {
@@ -34,6 +37,7 @@ export default function Index() {
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
