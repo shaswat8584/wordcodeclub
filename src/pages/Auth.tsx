@@ -17,7 +17,7 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -41,7 +41,7 @@ export default function Auth() {
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { display_name: displayName || username },
+          data: { display_name: username },
         },
       });
       if (error) {
@@ -85,18 +85,6 @@ export default function Auth() {
                   autoComplete="username"
                 />
               </div>
-              {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="displayName" className="text-xs">Display Name</Label>
-                  <Input
-                    id="displayName"
-                    value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
-                    placeholder="Your name (optional)"
-                    className="text-sm"
-                  />
-                </div>
-              )}
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-xs">Password</Label>
                 <Input
